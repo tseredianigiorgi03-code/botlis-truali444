@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="ka" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Spin The Bottle</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        passion: {
+                            50: '#fff1f2',
+                            100: '#ffe4e6',
+                            200: '#fecdd3',
+                            300: '#fda4af',
+                            400: '#fb7185',
+                            500: '#f43f5e',
+                            600: '#e11d48',
+                            700: '#be123c',
+                            800: '#9f1239',
+                            900: '#881337',
+                            950: '#300210',
+                        },
+                        neon: {
+                            pink: '#ff007f',
+                            purple: '#9d00ff',
+                            gold: '#ffd700'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Segoe UI', 'sans-serif'],
+                    },
+                    animation: {
+                        'float-heart': 'floatHeart 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 2s infinite alternate',
+                        'spin-slow': 'spin 20s linear infinite',
+                    },
+                    keyframes: {
+                        floatHeart: {
+                            '0%': { transform: 'translateY(0px) rotate(0deg) scale(1)', opacity: '0.8' },
+                            '50%': { transform: 'translateY(-25px) rotate(15deg) scale(1.1)', opacity: '1' },
+                            '100%': { transform: 'translateY(0px) rotate(0deg) scale(1)', opacity: '0.8' }
+                        },
+                        pulseGlow: {
+                            '0%': { boxShadow: '0 0 15px rgba(244, 63, 94, 0.4), 0 0 5px rgba(255, 0, 127, 0.3)' },
+                            '100%': { boxShadow: '0 0 35px rgba(225, 29, 72, 0.8), 0 0 20px rgba(157, 0, 255, 0.6)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1a0209;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #9f1239;
+            border-radius: 3px;
+        }
+
+        .glass-panel {
+            background: rgba(48, 2, 16, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(251, 113, 133, 0.25);
+        }
+
+        .glass-card {
+            background: rgba(26, 2, 9, 0.88);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(244, 63, 94, 0.35);
+        }
+
+        .text-glow {
+            text-shadow: 0 0 12px rgba(255, 0, 127, 0.8), 0 0 20px rgba(244, 63, 94, 0.6);
+        }
+
+        #bottle {
+            transform-origin: 50% 50%;
+            will-change: transform;
+        }
+
+        .bg-heart {
+            position: absolute;
+            color: rgba(244, 63, 94, 0.12);
+            pointer-events: none;
+            z-index: 0;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-slate-950 via-passion-950 to-slate-950 text-slate-100 min-h-screen flex flex-col justify-between overflow-x-hidden select-none font-sans relative">
+
+    <!-- Background Animated Hearts -->
+    <div id="heartsContainer" class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <i class="fa-solid fa-heart bg-heart text-4xl top-10 left-[10%] animate-float-heart" style="animation-delay: 0s;"></i>
+        <i class="fa-solid fa-fire bg-heart text-3xl top-1/4 left-[85%] animate-float-heart" style="animation-delay: 1.2s;"></i>
+        <i class="fa-solid fa-heart bg-heart text-5xl top-2/3 left-[5%] animate-float-heart" style="animation-delay: 2.5s;"></i>
+        <i class="fa-solid fa-bolt bg-heart text-3xl top-3/4 left-[80%] animate-float-heart" style="animation-delay: 1.8s;"></i>
+        <i class="fa-solid fa-heart bg-heart text-6xl top-1/2 left-[50%] -translate-x-1/2 animate-float-heart" style="animation-delay: 3s; color: rgba(255, 0, 127, 0.08);"></i>
+    </div>
+
+    <!-- Navigation Header -->
+    <header class="w-full max-w-5xl mx-auto px-4 py-3.5 flex items-center justify-between z-20 relative">
+        <div class="flex items-center space-x-3">
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-neon-pink via-passion-600 to-neon-purple flex items-center justify-center text-white shadow-lg shadow-passion-600/50 border border-rose-300/30">
+                <i class="fa-solid fa-wine-bottle text-2xl animate-pulse"></i>
+            </div>
+            <div>
+                <h1 class="text-xl md:text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-rose-200 via-passion-400 to-neon-pink">
+                    ბოთლის ტრიალი ონლაინ
+                </h1>
+                <!-- Online Room Status -->
+                <div class="flex items-center space-x-2 text-xs text-rose-300/80">
+                    <span class="inline-flex items-center text-emerald-400 font-semibold text-[11px]" id="onlineStatusBadge">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping mr-1.5"></span>
+                        <span id="onlineCounter">offline</span>
+                    </span>
+                    <span>•</span>
+                    <span class="text-amber-300 font-bold" id="roomCodeDisplay">ოთახი: -</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-2">
+            <!-- Share Code / Link Button -->
+            <button id="shareRoomBtn" onclick="copyRoomCode()" class="hidden glass-panel p-2.5 px-3 rounded-xl hover:bg-passion-900/60 transition flex items-center space-x-2 text-rose-200 border border-passion-500/30">
+                <i class="fa-solid fa-share-nodes text-amber-400"></i>
+                <span class="text-xs font-bold hidden sm:inline">გაზიარება</span>
+            </button>
+
+            <!-- Tasks Manager Modal Button -->
+            <button id="tasksBtn" onclick="toggleTasksModal()" class="hidden glass-panel p-2.5 px-3 rounded-xl hover:bg-passion-900/60 transition flex items-center space-x-2 text-rose-200 border border-passion-500/30">
+                <i class="fa-solid fa-list-check text-amber-400"></i>
+                <span class="text-xs font-bold hidden sm:inline">დავალებები</span>
+            </button>
+
+            <!-- Chat Modal Button -->
+            <button id="chatBtn" onclick="toggleChatModal()" class="hidden glass-panel p-2.5 px-3 rounded-xl hover:bg-passion-900/60 transition flex items-center space-x-2 text-rose-200 border border-passion-500/30 relative">
+                <i class="fa-solid fa-comments text-neon-pink"></i>
+                <span id="unreadBadge" class="hidden absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-400 rounded-full animate-ping"></span>
+            </button>
+
+            <!-- Sound Toggle -->
+            <button id="soundBtn" onclick="toggleSound()" class="glass-panel p-2.5 px-3 rounded-xl hover:bg-passion-900/60 transition flex items-center space-x-2 text-rose-200 border border-passion-500/30">
+                <i id="soundIcon" class="fa-solid fa-volume-high text-passion-400"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Room Login Screen (Shown when not connected to a room) -->
+    <div id="joinScreen" class="w-full max-w-md mx-auto px-4 my-auto z-30 relative">
+        <div class="glass-card p-6 sm:p-8 rounded-3xl border border-passion-500/40 shadow-2xl text-center">
+            <div class="w-16 h-16 rounded-full bg-passion-600/30 border border-neon-pink/50 flex items-center justify-center mx-auto mb-4 text-3xl text-neon-pink shadow-lg shadow-neon-pink/20">
+                <i class="fa-solid fa-heart-circle-bolt"></i>
+            </div>
+            
+            <h2 class="text-2xl font-black text-white mb-2">ონლაინ თამაში</h2>
+            <p class="text-xs text-rose-200/80 mb-6">შექმენი ოთახი ან შემოუერთდი მეგობრებს დისტანციურად სათამაშოდ!</p>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-left text-xs font-bold text-rose-300 mb-1.5">შენი სახელი</label>
+                    <input type="text" id="playerNameInput" placeholder="შეიყვანე სახელი..." class="w-full bg-slate-950/90 border border-passion-500/40 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-400 transition">
+                </div>
+
+                <div>
+                    <label class="block text-left text-xs font-bold text-rose-300 mb-1.5">ოთახის კოდი (შემოსასვლელად)</label>
+                    <input type="text" id="roomCodeInput" placeholder="მაგ: LOVE12" class="w-full bg-slate-950/90 border border-passion-500/40 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-400 transition uppercase tracking-widest font-mono">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button onclick="createRoom()" class="bg-gradient-to-r from-passion-700 via-rose-600 to-neon-pink hover:from-passion-600 hover:to-rose-500 text-white font-bold py-3 px-4 rounded-xl text-sm transition shadow-lg shadow-passion-600/40 flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-plus-circle"></i>
+                        <span>ახალი ოთახი</span>
+                    </button>
+                    <button onclick="joinRoom()" class="bg-slate-900 hover:bg-slate-800 text-rose-200 font-bold py-3 px-4 rounded-xl text-sm border border-passion-500/40 transition flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                        <span>შესვლა</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Game Area (Hidden until room is joined) -->
+    <main id="gameScreen" class="hidden w-full max-w-4xl mx-auto px-4 flex-1 flex flex-col items-center justify-center py-1 z-10 relative overflow-hidden">
+
+        <!-- Active Room Players List Bar -->
+        <div class="w-full max-w-md mb-1">
+            <div class="glass-panel p-2 rounded-2xl flex items-center space-x-2 overflow-x-auto scrollbar-none" id="activePlayersBar">
+                <!-- Dynamically populated players badges -->
+            </div>
+        </div>
+
+        <!-- Mode Selector -->
+        <div class="w-full max-w-sm glass-panel p-1 rounded-2xl mb-1.5 flex items-center justify-between text-xs font-bold shadow-inner border border-passion-500/30">
+            <button onclick="setGameMode('all')" id="mode-all" class="mode-btn flex-1 py-1.5 px-2 rounded-xl transition duration-200 text-center bg-gradient-to-r from-passion-600 via-rose-600 to-neon-pink text-white shadow-lg shadow-passion-600/40 font-bold">
+                <i class="fa-solid fa-fire mr-1 text-amber-300"></i> ყველა
+            </button>
+            <button onclick="setGameMode('truth')" id="mode-truth" class="mode-btn flex-1 py-1.5 px-2 rounded-xl transition duration-200 text-center text-rose-300/70 hover:text-white">
+                <i class="fa-solid fa-comment-dots mr-1"></i> სიმართლე
+            </button>
+            <button onclick="setGameMode('action')" id="mode-action" class="mode-btn flex-1 py-1.5 px-2 rounded-xl transition duration-200 text-center text-rose-300/70 hover:text-white">
+                <i class="fa-solid fa-bolt mr-1 text-neon-pink"></i> მოქმედება
+            </button>
+        </div>
+
+        <!-- Bottle Stage Container with Dynamic Player Circle -->
+        <div class="relative w-full max-w-[260px] sm:max-w-[300px] aspect-square flex items-center justify-center my-1">
+            
+            <!-- Stage Backdrop Glow -->
+            <div class="absolute inset-4 rounded-full bg-gradient-to-tr from-passion-600/30 via-neon-pink/20 to-neon-purple/20 blur-3xl animate-pulse-glow pointer-events-none"></div>
+
+            <!-- Outer Ring -->
+            <div class="absolute inset-2 rounded-full border border-passion-500/30 flex items-center justify-center pointer-events-none">
+                <div class="w-full h-full rounded-full border border-dashed border-passion-400/20 animate-spin-slow"></div>
+            </div>
+
+            <!-- Dynamic Player Positions Container around the bottle circle -->
+            <div id="circlePlayersContainer" class="absolute inset-0 pointer-events-none z-20">
+                <!-- Player badges rendered dynamically via JavaScript -->
+            </div>
+
+            <!-- Bottle Graphic Vector -->
+            <div id="bottle" class="w-20 sm:w-24 h-48 sm:h-56 relative cursor-pointer transform transition-transform duration-100 ease-out drop-shadow-[0_0_25px_rgba(255,0,127,0.6)] z-10" onclick="spinBottleOnline()">
+                
+                <!-- Pointer Indicator Above Cap -->
+                <div class="absolute -top-7 left-1/2 transform -translate-x-1/2 flex flex-col items-center animate-bounce z-20 pointer-events-none">
+                    <span class="text-[9px] uppercase tracking-widest font-black text-amber-300 bg-slate-950/90 px-2 py-0.5 rounded-full border border-amber-400/50 shadow-lg flex items-center gap-1">
+                        <i class="fa-solid fa-fire text-neon-pink text-[8px]"></i> სახურავი
+                    </span>
+                    <i class="fa-solid fa-caret-down text-neon-pink text-lg -mt-1"></i>
+                </div>
+
+                <!-- Bottle SVG Graphic -->
+                <svg viewBox="0 0 100 300" class="w-full h-full drop-shadow-2xl">
+                    <defs>
+                        <linearGradient id="passionGlassGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#ff007f" stop-opacity="0.95"/>
+                            <stop offset="40%" stop-color="#f43f5e" stop-opacity="0.9"/>
+                            <stop offset="80%" stop-color="#be123c" stop-opacity="0.95"/>
+                            <stop offset="100%" stop-color="#300210" stop-opacity="1"/>
+                        </linearGradient>
+
+                        <linearGradient id="goldCapGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#fef08a"/>
+                            <stop offset="50%" stop-color="#f59e0b"/>
+                            <stop offset="100%" stop-color="#b45309"/>
+                        </linearGradient>
+
+                        <linearGradient id="potionGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#ff007f" stop-opacity="0.85"/>
+                            <stop offset="100%" stop-color="#881337" stop-opacity="0.95"/>
+                        </linearGradient>
+                    </defs>
+
+                    <!-- Cap Pointer -->
+                    <path d="M 38,10 L 62,10 L 64,28 L 36,28 Z" fill="url(#goldCapGrad)" rx="2"/>
+                    <rect x="34" y="24" width="32" height="6" fill="#b45309" rx="2" />
+
+                    <!-- Neck -->
+                    <path d="M 39,30 L 61,30 L 63,100 L 37,100 Z" fill="url(#passionGlassGrad)"/>
+                    <path d="M 42,33 L 45,33 L 47,95 L 44,95 Z" fill="#ffffff" opacity="0.35"/>
+
+                    <!-- Body -->
+                    <path d="M 37,100 C 37,120 18,135 18,160 L 18,270 C 18,285 30,292 50,292 C 70,292 82,285 82,270 L 82,160 C 82,135 63,120 63,100 Z" fill="url(#passionGlassGrad)"/>
+
+                    <!-- Liquid Inside -->
+                    <path d="M 21,200 C 35,205 65,195 79,200 L 80,268 C 80,280 70,288 50,288 C 30,288 20,280 20,268 Z" fill="url(#potionGrad)"/>
+
+                    <!-- Glare Reflections -->
+                    <path d="M 24,165 C 24,150 35,138 42,130 L 40,134 C 34,142 27,152 27,165 L 27,260 C 27,270 30,275 35,278 C 28,275 24,268 24,260 Z" fill="#ffffff" opacity="0.4"/>
+
+                    <!-- Label -->
+                    <rect x="25" y="165" width="50" height="42" fill="rgba(20, 1, 7, 0.9)" rx="8" stroke="rgba(255, 0, 127, 0.6)" stroke-width="1.5"/>
+                    <text x="50" y="186" font-size="11" fill="#ff007f" font-weight="900" text-anchor="middle" font-family="sans-serif">SPIN LOVE</text>
+                    <text x="50" y="198" font-size="7" fill="#fbbf24" font-weight="bold" text-anchor="middle" font-family="sans-serif">ONLINE</text>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Spin Trigger Button -->
+        <button id="spinBtn" onclick="spinBottleOnline()" class="group relative px-7 py-2.5 rounded-xl font-black text-base text-white shadow-xl transition duration-300 transform active:scale-95 hover:-translate-y-0.5 my-1">
+            <div class="absolute inset-0 bg-gradient-to-r from-passion-600 via-rose-600 to-neon-pink rounded-xl transition duration-300 group-hover:opacity-90"></div>
+            <div class="absolute inset-0 bg-gradient-to-r from-passion-600 via-rose-600 to-neon-pink rounded-xl blur-md opacity-75 group-hover:opacity-100 transition duration-300"></div>
+            
+            <span class="relative z-10 flex items-center space-x-2">
+                <i class="fa-solid fa-fire text-amber-300 text-base group-hover:scale-125 transition transform duration-300"></i>
+                <span class="tracking-wide">დაატრიალე ბოთლი!</span>
+            </span>
+        </button>
+
+        <!-- Prompt Display Container -->
+        <div class="w-full max-w-md mt-1 glass-card p-3.5 sm:p-4 rounded-2xl text-center relative overflow-hidden shadow-xl border border-passion-500/40 min-h-[90px] flex flex-col justify-center items-center">
+            
+            <!-- Target Player / Action Category Badge -->
+            <div id="playerTargetBadge" class="text-[11px] uppercase tracking-widest font-black text-amber-300 mb-1 flex items-center justify-center space-x-1.5 bg-slate-950/80 px-3 py-0.5 rounded-full border border-amber-400/30">
+                <i class="fa-solid fa-fire text-neon-pink"></i>
+                <span id="playerTargetName">ვისაც სახურავი მოუწევს:</span>
+            </div>
+
+            <!-- Task / Question Prompt -->
+            <div id="taskDisplay" class="text-sm sm:text-base font-medium text-rose-100 leading-snug px-1 transition-all duration-300">
+                დააჭირე ღილაკს <span class="text-amber-300 font-bold">„დაატრიალე ბოთლი“</span> და გაიგე დავალება!
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Task / Question Management Modal -->
+    <div id="tasksModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+        <div class="glass-card w-full max-w-md h-[520px] rounded-3xl p-5 border border-passion-500/50 shadow-2xl flex flex-col justify-between" id="tasksModalContent">
+            
+            <div class="flex items-center justify-between border-b border-passion-500/30 pb-3">
+                <h3 class="text-lg font-bold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-list-check text-amber-400"></i>
+                    <span>კითხვებისა და მოქმედებების მართვა</span>
+                </h3>
+                <button onclick="toggleTasksModal()" class="text-rose-300 hover:text-white p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Add Task Form -->
+            <div class="my-3 space-y-2">
+                <label class="block text-xs font-bold text-rose-300">ახალი კითხვის ან მოქმედების დამატება:</label>
+                <div class="flex space-x-2">
+                    <select id="modalNewTaskType" class="bg-slate-950 text-amber-300 border border-passion-500/40 rounded-xl px-2.5 py-2 text-xs font-bold focus:outline-none">
+                        <option value="truth">【სიმართლე】</option>
+                        <option value="action">【მოქმედება】</option>
+                    </select>
+                    <input type="text" id="modalNewTaskInput" placeholder="ჩაწერე ტექსტი..." class="flex-1 bg-slate-950 border border-passion-500/40 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400">
+                    <button onclick="addModalCustomTask()" class="bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-400 hover:to-rose-500 text-white font-bold px-3 py-2 rounded-xl text-xs transition shadow-md flex items-center space-x-1">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>დამატება</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Custom Tasks List Container -->
+            <div class="flex-1 overflow-y-auto space-y-2 pr-1 text-xs my-2" id="modalCustomTasksList">
+                <!-- Dynamically populated items -->
+            </div>
+
+            <div class="pt-2 border-t border-passion-500/30 text-center">
+                <button onclick="toggleTasksModal()" class="w-full bg-slate-900 hover:bg-slate-800 text-rose-200 font-bold py-2.5 rounded-xl text-xs border border-passion-500/40 transition">
+                    დახურვა
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Modal -->
+    <div id="chatModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+        <div class="glass-card w-full max-w-md h-[500px] rounded-3xl p-5 border border-passion-500/50 shadow-2xl flex flex-col justify-between transform transition-transform duration-300 scale-95" id="chatModalContent">
+            
+            <div class="flex items-center justify-between border-b border-passion-500/30 pb-3">
+                <h3 class="text-lg font-bold text-white flex items-center space-x-2">
+                    <i class="fa-solid fa-comments text-neon-pink"></i>
+                    <span>ოთახის ჩატი</span>
+                </h3>
+                <button onclick="toggleChatModal()" class="text-rose-300 hover:text-white p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Messages Stream -->
+            <div id="chatMessages" class="flex-1 overflow-y-auto my-3 space-y-2 pr-1 text-xs">
+                <!-- Live messages -->
+            </div>
+
+            <!-- Chat Input -->
+            <div class="flex space-x-2 pt-2 border-t border-passion-500/30">
+                <input type="text" id="chatInput" placeholder="დაწერე შეტყობინება..." class="flex-1 bg-slate-950/90 border border-passion-500/40 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-amber-400 transition" onkeypress="if(event.key==='Enter') sendChatMessage()">
+                <button onclick="sendChatMessage()" class="bg-gradient-to-r from-passion-600 to-neon-pink hover:from-passion-500 hover:to-rose-400 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition flex items-center space-x-1 shadow-md">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="w-full max-w-5xl mx-auto px-4 py-3 text-center text-xs text-rose-300/50 z-10">
+        &copy; 2026 ბოთლის ტრიალი • ონლაინ ვერსია ❤️🔥
+    </footer>
+
+    <!-- Firebase Standard Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, updateDoc, onSnapshot, collection, addDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global Firebase Configuration & Variables
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'bottle-spin-game';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+
+        let app = null;
+        let auth = null;
+        let db = null;
+
+        if (firebaseConfig && firebaseConfig.apiKey !== "dummy-key") {
+            try {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+            } catch (e) {
+                console.warn("Firebase config error, fallback to local offline mode", e);
+            }
+        }
+
+        // App Game State
+        let currentUser = { uid: 'local-user-' + Math.random().toString(36).substring(2, 7) };
+        let myPlayerName = localStorage.getItem('bottle_player_name') || '';
+        let roomCode = '';
+        let roomRef = null;
+        let isHost = false;
+        let roomUnsub = null;
+        let chatUnsub = null;
+
+        let currentRotation = 0;
+        let isSpinning = false;
+        let currentMode = 'all';
+        let soundEnabled = true;
+        let roomCustomTruths = [];
+        let roomCustomActions = [];
+        let localPlayers = [];
+
+        /* ====================================================================
+           GAME MODE SELECTION
+           ==================================================================== */
+        window.setGameMode = function(mode) {
+            currentMode = mode;
+            
+            // Update mode selection button styling
+            const modes = ['all', 'truth', 'action'];
+            modes.forEach(m => {
+                const btn = document.getElementById(`mode-${m}`);
+                if (!btn) return;
+                
+                if (m === mode) {
+                    btn.className = "mode-btn flex-1 py-1.5 px-2 rounded-xl transition duration-200 text-center bg-gradient-to-r from-passion-600 via-rose-600 to-neon-pink text-white shadow-lg shadow-passion-600/40 font-bold";
+                } else {
+                    btn.className = "mode-btn flex-1 py-1.5 px-2 rounded-xl transition duration-200 text-center text-rose-300/70 hover:text-white";
+                }
+            });
+        };
+
+        /* ====================================================================
+           ONLINE-SPECIFIC TRUTH & ACTION PRESETS
+           ==================================================================== */
+        const QUESTION_PRESETS = {
+            truth: [
+                "【სიმართლე】 აჩვენე შენი ტელეფონის ბოლო სქრინშოთი ან ფოტო ჩატიდან!",
+                "【სიმართლე】 რომელი მოთამაშის პროფილი მოგწონს ყველაზე მეტად ამ ოთახში?",
+                "【სიმართლე】 წაიკითხე ხმამაღლა ბოლო შეტყობინება, რომელიც ვისმე გაუგზავნე!",
+                "【სიმართლე】 გქონია თუ არა ონლაინ რომანი ან ფლირტი ისეთ ადამიანთან, ვინც პირისპირ არ გინახავს?",
+                "【სიმართლე】 რომელ მოთამაშესთან წახვიდოდი 1-ზე-1 ვიდეო ზარზე პირდაპირ ახლა?",
+                "【სიმართლე】 რა არის შენი ყველაზე უხერხული ისტორია, რომელიც ონლაინ ზარის დროს გადაგხდენია?",
+                "【სიმართლე】 გახსენი ინსტაგრამი/სოციალური ქსელი და თქვი, ვინ არის პირველი ადამიანი შენს ფიდში!",
+                "【სიმართლე】 რა არის შენი ყველაზე დიდი რომანტიკული ან ვნებიანი საიდუმლო?",
+                "【სიმართლე】 უპასუხე გულწრფელად: გჯერა თუ არა დისტანციური სიყვარულის?",
+                "【სიმართლე】 რომელ ცნობილ ადამიანს მიწერდი პირადში, პასუხის გარანტია რომ გქონდეს?"
+            ],
+            action: [
+                "【მოქმედება】 გაუგზავნე ხმოვანი შეტყობინება (Voice Note) შენს Crush-ს ან მეგობარს და უთხარი: 'მენატრები'!",
+                "【მოქმედება】 ჩართე კამერა/მიკროფონი და გააკეთე 5-წამიანი ვნებიანი/სასაცილო ცეკვა!",
+                "【მოქმედება】 ჩაწერე ოთახის ჩატში ყველაზე ფლირტავური კომპლიმენტი იმ ადამიანისთვის, ვისზეც ბოთლი მიგითითებს!",
+                "【მოქმედება】 შეცვალე შენი პროფილის სახელი ოთახში 5 წუთით სასაცილო/რომანტიკულ მეტსახელზე!",
+                "【მოქმედება】 გაუგზავნე ფლირტავური სმაილი სოციალურ ქსელში ბოლოს მიმოწერილ ადამიანს!",
+                "【მოქმედება】 გააკეთე გულის ფორმა ხელებით კამერაში ან გადაიღე სელფი და ჩააგდე ჩატში!",
+                "【მოქმედება】 იმღერე რომანტიკული სიმღერის 1 მისამღერი მიკროფონში!",
+                "【მოქმედება】 უთხარი 3 ტკბილი კომპლიმენტი იმ მოთამაშეს, ვინც შენს საპირისპიროდაა ჩამონათვალში!"
+            ]
+        };
+
+        /* ====================================================================
+           WEB AUDIO API SYNTHESIZER
+           ==================================================================== */
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playTickSound() {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.03);
+
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.03);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.03);
+            } catch (e) {}
+        }
+
+        function playWinSound() {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                const notes = [349.23, 440.00, 523.25, 659.25];
+                notes.forEach((freq, index) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + index * 0.08);
+
+                    gain.gain.setValueAtTime(0, audioCtx.currentTime + index * 0.08);
+                    gain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + index * 0.08 + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + index * 0.08 + 0.4);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start(audioCtx.currentTime + index * 0.08);
+                    osc.stop(audioCtx.currentTime + index * 0.08 + 0.4);
+                });
+            } catch (e) {}
+        }
+
+        window.toggleSound = function() {
+            soundEnabled = !soundEnabled;
+            const soundIcon = document.getElementById('soundIcon');
+            const soundBtn = document.getElementById('soundBtn');
+
+            if (soundEnabled) {
+                soundIcon.className = "fa-solid fa-volume-high text-passion-400";
+                soundBtn.classList.remove('opacity-50');
+            } else {
+                soundIcon.className = "fa-solid fa-volume-xmark text-slate-500";
+                soundBtn.classList.add('opacity-50');
+            }
+        };
+
+        /* ====================================================================
+           AUTHENTICATION & FIREBASE INITIALIZATION
+           ==================================================================== */
+        async function initializeAuth() {
+            if (!auth) return;
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) {
+                console.warn("Auth initialization fallback:", err);
+            }
+        }
+
+        if (auth) {
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    currentUser = user;
+                    if (myPlayerName) {
+                        document.getElementById('playerNameInput').value = myPlayerName;
+                    }
+                }
+            });
+        }
+
+        /* ====================================================================
+           ONLINE ROOM CREATION & JOINING LOGIC
+           ==================================================================== */
+        window.createRoom = async function() {
+            const nameInput = document.getElementById('playerNameInput').value.trim();
+            if (!nameInput) {
+                showNotification('გთხოვთ შეიყვანოთ შენი სახელი!');
+                return;
+            }
+
+            myPlayerName = nameInput;
+            localStorage.setItem('bottle_player_name', myPlayerName);
+            roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+            localPlayers = [{ uid: currentUser.uid, name: myPlayerName }];
+
+            if (db) {
+                try {
+                    await initializeAuth();
+                    roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode);
+
+                    const initialRoomData = {
+                        code: roomCode,
+                        hostId: currentUser.uid,
+                        players: localPlayers,
+                        customTruths: [],
+                        customActions: [],
+                        bottleState: {
+                            rotation: 0,
+                            targetPlayer: '',
+                            taskText: 'დააჭირე ღილაკს „დაატრიალე ბოთლი“ და გაიგე დავალება!',
+                            spinning: false,
+                            timestamp: Date.now()
+                        }
+                    };
+
+                    await setDoc(roomRef, initialRoomData);
+                    listenToRoomUpdates();
+                } catch (e) {
+                    console.warn("Firestore error, running in local mode", e);
+                }
+            }
+
+            isHost = true;
+            enterRoomUI();
+            if (!db) {
+                renderActivePlayers(localPlayers);
+            }
+        };
+
+        window.joinRoom = async function() {
+            const nameInput = document.getElementById('playerNameInput').value.trim();
+            const codeInput = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+
+            if (!nameInput) {
+                showNotification('გთხოვთ შეიყვანოთ შენი სახელი!');
+                return;
+            }
+
+            myPlayerName = nameInput;
+            localStorage.setItem('bottle_player_name', myPlayerName);
+            roomCode = codeInput || 'ROOM1';
+            localPlayers = [{ uid: currentUser.uid, name: myPlayerName }];
+
+            if (db && codeInput) {
+                try {
+                    await initializeAuth();
+                    roomRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode);
+
+                    await setDoc(roomRef, {
+                        code: roomCode,
+                        players: arrayUnion({ uid: currentUser.uid, name: myPlayerName })
+                    }, { merge: true });
+
+                    listenToRoomUpdates();
+                } catch (e) {
+                    console.warn("Firestore join error, starting session locally", e);
+                }
+            }
+
+            enterRoomUI();
+            if (!db) {
+                renderActivePlayers(localPlayers);
+            }
+        };
+
+        function showNotification(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-passion-700 text-white px-5 py-2.5 rounded-2xl shadow-xl border border-passion-400 text-xs font-bold animate-bounce';
+            toast.innerText = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2500);
+        }
+
+        function enterRoomUI() {
+            document.getElementById('joinScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            document.getElementById('shareRoomBtn').classList.remove('hidden');
+            document.getElementById('tasksBtn').classList.remove('hidden');
+            document.getElementById('chatBtn').classList.remove('hidden');
+            
+            document.getElementById('roomCodeDisplay').innerText = `ოთახი: #${roomCode}`;
+        }
+
+        function listenToRoomUpdates() {
+            if (!roomRef) return;
+
+            // Room Data Sync
+            roomUnsub = onSnapshot(roomRef, (snapshot) => {
+                if (!snapshot.exists()) return;
+                const data = snapshot.data();
+
+                // Check host status
+                isHost = (data.hostId === currentUser?.uid);
+
+                // Sync custom questions/actions
+                roomCustomTruths = data.customTruths || [];
+                roomCustomActions = data.customActions || [];
+                renderModalCustomTasksList();
+
+                localPlayers = data.players || [];
+
+                // 1. Update Active Players Bar & Circle Positions
+                renderActivePlayers(localPlayers);
+
+                // 2. Sync Bottle Rotation & Spin Events
+                if (data.bottleState) {
+                    syncBottleState(data.bottleState, localPlayers);
+                }
+            }, (error) => {
+                console.warn("Room sync warning:", error);
+            });
+
+            // Chat Sync
+            if (db) {
+                const chatCol = collection(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode, 'chat');
+                chatUnsub = onSnapshot(chatCol, (snapshot) => {
+                    const messages = [];
+                    snapshot.forEach(d => messages.push(d.data()));
+                    messages.sort((a, b) => a.timestamp - b.timestamp);
+                    renderChatMessages(messages);
+                }, (error) => {
+                    console.warn("Chat sync warning:", error);
+                });
+            }
+        }
+
+        function renderActivePlayers(players) {
+            const container = document.getElementById('activePlayersBar');
+            const counter = document.getElementById('onlineCounter');
+            counter.innerText = `🟢 ონლაინშია ${players.length} მოთამაშე`;
+
+            container.innerHTML = players.map(p => `
+                <div class="flex items-center space-x-1.5 bg-slate-950/80 border ${p.uid === currentUser?.uid ? 'border-amber-400/80 text-amber-300' : 'border-passion-500/30 text-rose-200'} px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap shadow-md">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    <span>${p.name}</span>
+                </div>
+            `).join('');
+
+            // Render Circle Positions around the bottle
+            renderCirclePlayers(players);
+        }
+
+        function renderCirclePlayers(players) {
+            const circleContainer = document.getElementById('circlePlayersContainer');
+            if (!circleContainer) return;
+
+            if (players.length === 0) {
+                circleContainer.innerHTML = '';
+                return;
+            }
+
+            const total = players.length;
+            const radius = 42; // Percentage radius from center
+
+            circleContainer.innerHTML = players.map((player, index) => {
+                // Calculate angle in degrees (0 deg = top / 12 o'clock)
+                const angleDeg = (index * (360 / total));
+                const angleRad = (angleDeg - 90) * (Math.PI / 180); // convert so 0 deg is top
+
+                const leftPos = 50 + radius * Math.cos(angleRad);
+                const topPos = 50 + radius * Math.sin(angleRad);
+
+                const isMe = player.uid === currentUser?.uid;
+
+                return `
+                    <div id="circle-player-${index}" class="absolute transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300" style="left: ${leftPos}%; top: ${topPos}%;">
+                        <div class="flex flex-col items-center group">
+                            <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-full ${isMe ? 'bg-gradient-to-tr from-amber-400 to-amber-600 border-2 border-white' : 'bg-gradient-to-tr from-passion-600 to-neon-pink border border-rose-300/50'} flex items-center justify-center text-white font-bold text-xs sm:text-sm shadow-xl shadow-passion-900/60 transition group-hover:scale-110">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                            <span class="mt-1 px-2 py-0.5 rounded-full bg-slate-950/90 text-[10px] sm:text-xs font-bold ${isMe ? 'text-amber-300 border border-amber-400/50' : 'text-rose-100 border border-passion-500/30'} shadow-md whitespace-nowrap max-w-[80px] truncate">
+                                ${player.name}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        /* ====================================================================
+           ONLINE BOTTLE SPINNING SYNCHRONIZATION
+           ==================================================================== */
+        window.spinBottleOnline = async function() {
+            if (isSpinning) return;
+
+            initAudio();
+
+            const players = localPlayers.length > 0 ? localPlayers : [{ name: myPlayerName }];
+            const playersCount = players.length;
+
+            // Determine task pool
+            const truthsPool = [...QUESTION_PRESETS.truth, ...roomCustomTruths];
+            const actionsPool = [...QUESTION_PRESETS.action, ...roomCustomActions];
+
+            let pool = [];
+            if (currentMode === 'truth') pool = truthsPool;
+            else if (currentMode === 'action') pool = actionsPool;
+            else pool = [...truthsPool, ...actionsPool];
+
+            const selectedTask = pool[Math.floor(Math.random() * pool.length)];
+
+            // Pick a target player index
+            const targetIndex = Math.floor(Math.random() * playersCount);
+            const playerAngle = (targetIndex * (360 / playersCount));
+
+            // Calculate new rotation ending exactly on chosen player angle
+            const minSpins = 6;
+            const maxSpins = 10;
+            const randomExtraSpins = Math.floor(Math.random() * (maxSpins - minSpins + 1)) + minSpins;
+            
+            // Current modulo angle
+            const currentMod = currentRotation % 360;
+            let angleDiff = playerAngle - currentMod;
+            if (angleDiff <= 0) angleDiff += 360;
+
+            const nextRotation = currentRotation + (randomExtraSpins * 360) + angleDiff;
+
+            const bottleState = {
+                rotation: nextRotation,
+                targetIndex: targetIndex,
+                taskText: selectedTask,
+                spinning: true,
+                timestamp: Date.now()
+            };
+
+            // Update Firebase document or execute locally
+            if (roomRef) {
+                try {
+                    await updateDoc(roomRef, { bottleState: bottleState });
+                } catch (e) {
+                    syncBottleState(bottleState, players);
+                }
+            } else {
+                syncBottleState(bottleState, players);
+            }
+        };
+
+        function syncBottleState(state, players) {
+            const bottle = document.getElementById('bottle');
+            const spinBtn = document.getElementById('spinBtn');
+            const taskDisplay = document.getElementById('taskDisplay');
+            const playerTargetBadge = document.getElementById('playerTargetBadge');
+
+            if (state.rotation !== currentRotation) {
+                currentRotation = state.rotation;
+                isSpinning = true;
+
+                // Reset highlighted circle players
+                document.querySelectorAll('#circlePlayersContainer > div').forEach(el => {
+                    el.classList.remove('scale-125', 'z-30');
+                });
+
+                spinBtn.disabled = true;
+                spinBtn.classList.add('opacity-60', 'cursor-not-allowed');
+
+                taskDisplay.style.opacity = '0.5';
+                taskDisplay.innerHTML = `<span class="inline-block animate-pulse text-rose-300"><i class="fa-solid fa-spinner fa-spin mr-2"></i>ბოთლი ტრიალებს...</span>`;
+
+                const duration = 4200;
+                let lastTickAngle = 0;
+
+                // Audio ticker animation
+                const startTime = performance.now();
+                function simulateAudioTicks(now) {
+                    const elapsed = now - startTime;
+                    if (elapsed < duration) {
+                        const progress = elapsed / duration;
+                        const easeOut = 1 - Math.pow(1 - progress, 3);
+                        const currentAngle = easeOut * currentRotation;
+
+                        if (currentAngle - lastTickAngle > 22) {
+                            playTickSound();
+                            lastTickAngle = currentAngle;
+                        }
+
+                        requestAnimationFrame(simulateAudioTicks);
+                    }
+                }
+                requestAnimationFrame(simulateAudioTicks);
+
+                bottle.style.transition = `transform ${duration}ms cubic-bezier(0.15, 0.85, 0.15, 1)`;
+                bottle.style.transform = `rotate(${currentRotation}deg)`;
+
+                setTimeout(() => {
+                    isSpinning = false;
+                    spinBtn.disabled = false;
+                    spinBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+
+                    playWinSound();
+                    if (typeof confetti === 'function') {
+                        confetti({ particleCount: 50, spread: 60, origin: { y: 0.8 }, colors: ['#ff007f', '#ffd700'] });
+                    }
+
+                    // Identify precise target player based on cap orientation
+                    let targetUser = null;
+                    if (players.length > 0) {
+                        if (typeof state.targetIndex === 'number' && players[state.targetIndex]) {
+                            targetUser = players[state.targetIndex];
+                            const targetEl = document.getElementById(`circle-player-${state.targetIndex}`);
+                            if (targetEl) targetEl.classList.add('scale-125', 'z-30');
+                        } else {
+                            const finalModAngle = (currentRotation % 360 + 360) % 360;
+                            const idx = Math.round(finalModAngle / (360 / players.length)) % players.length;
+                            targetUser = players[idx];
+                            const targetEl = document.getElementById(`circle-player-${idx}`);
+                            if (targetEl) targetEl.classList.add('scale-125', 'z-30');
+                        }
+                    }
+
+                    if (targetUser) {
+                        playerTargetBadge.innerHTML = `<i class="fa-solid fa-fire text-neon-pink"></i><span>რიგია: <strong class="text-white font-extrabold underline">${targetUser.name}</strong></span>`;
+                    } else {
+                        playerTargetBadge.innerHTML = `<i class="fa-solid fa-fire text-neon-pink"></i><span>ვისაც სახურავი მოუწევს:</span>`;
+                    }
+
+                    taskDisplay.style.opacity = '1';
+                    taskDisplay.innerHTML = `<span class="text-white font-semibold text-lg sm:text-xl text-glow">${state.taskText}</span>`;
+
+                }, duration + 100);
+            }
+        }
+
+        /* ====================================================================
+           CUSTOM TASK MODAL LOGIC
+           ==================================================================== */
+        window.toggleTasksModal = function() {
+            const modal = document.getElementById('tasksModal');
+            const content = document.getElementById('tasksModalContent');
+
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    content.classList.remove('scale-95');
+                }, 10);
+            } else {
+                modal.classList.add('opacity-0');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+        };
+
+        window.addModalCustomTask = async function() {
+            const input = document.getElementById('modalNewTaskInput');
+            const type = document.getElementById('modalNewTaskType').value;
+            const text = input.value.trim();
+
+            if (!text) return;
+
+            const prefix = type === 'truth' ? '【სიმართლე】 ' : '【მოქმედება】 ';
+            const formattedTask = prefix + text;
+
+            if (type === 'truth') {
+                roomCustomTruths.push(formattedTask);
+            } else {
+                roomCustomActions.push(formattedTask);
+            }
+
+            if (roomRef) {
+                try {
+                    await updateDoc(roomRef, {
+                        customTruths: roomCustomTruths,
+                        customActions: roomCustomActions
+                    });
+                } catch (e) {}
+            }
+
+            renderModalCustomTasksList();
+            input.value = '';
+        };
+
+        window.removeModalCustomTask = async function(taskToRemove, type) {
+            if (type === 'truth') {
+                roomCustomTruths = roomCustomTruths.filter(t => t !== taskToRemove);
+            } else {
+                roomCustomActions = roomCustomActions.filter(a => a !== taskToRemove);
+            }
+
+            if (roomRef) {
+                try {
+                    await updateDoc(roomRef, {
+                        customTruths: roomCustomTruths,
+                        customActions: roomCustomActions
+                    });
+                } catch (e) {}
+            }
+
+            renderModalCustomTasksList();
+        };
+
+        function renderModalCustomTasksList() {
+            const container = document.getElementById('modalCustomTasksList');
+            if (!container) return;
+
+            const allCustom = [
+                ...roomCustomTruths.map(t => ({ text: t, type: 'truth' })),
+                ...roomCustomActions.map(a => ({ text: a, type: 'action' }))
+            ];
+
+            if (allCustom.length === 0) {
+                container.innerHTML = `<div class="text-center text-rose-300/50 py-4 text-xs">დამატებული კითხვები არ არის. შეიყვანე ტექსტი ზემოთ და დაამატე!</div>`;
+                return;
+            }
+
+            container.innerHTML = allCustom.map((item) => `
+                <div class="bg-slate-950/80 border border-passion-500/30 p-2.5 rounded-xl flex items-center justify-between text-rose-100 shadow-sm">
+                    <span class="pr-2 leading-snug">${item.text}</span>
+                    <button onclick="removeModalCustomTask('${item.text.replace(/'/g, "\\'")}', '${item.type}')" title="წაშლა" class="text-rose-400 hover:text-rose-200 hover:bg-rose-950/60 p-1.5 rounded-lg transition ml-2 flex-shrink-0">
+                        <i class="fa-solid fa-trash-can text-xs"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        window.toggleChatModal = function() {
+            const modal = document.getElementById('chatModal');
+            const content = document.getElementById('chatModalContent');
+
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+                document.getElementById('unreadBadge').classList.add('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    content.classList.remove('scale-95');
+                }, 10);
+            } else {
+                modal.classList.add('opacity-0');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+        };
+
+        window.copyRoomCode = function() {
+            if (!roomCode) return;
+            try {
+                const tempInput = document.createElement("input");
+                tempInput.value = roomCode;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand("copy");
+                document.body.removeChild(tempInput);
+                showNotification(`ოთახის კოდი (${roomCode}) დაკოპირდა!`);
+            } catch (e) {
+                showNotification(`ოთახის კოდი: ${roomCode}`);
+            }
+        };
+
+        window.sendChatMessage = async function() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text || !roomCode) return;
+
+            if (db) {
+                try {
+                    const chatCol = collection(db, 'artifacts', appId, 'public', 'data', 'rooms', roomCode, 'chat');
+                    await addDoc(chatCol, {
+                        sender: myPlayerName,
+                        text: text,
+                        timestamp: Date.now()
+                    });
+                } catch (e) {}
+            } else {
+                const container = document.getElementById('chatMessages');
+                const msgEl = document.createElement('div');
+                msgEl.className = 'bg-slate-950/80 border border-passion-500/20 p-2 rounded-xl';
+                msgEl.innerHTML = `<span class="font-bold text-amber-300 mr-1">${myPlayerName}:</span><span class="text-rose-100">${text}</span>`;
+                container.appendChild(msgEl);
+                container.scrollTop = container.scrollHeight;
+            }
+
+            input.value = '';
+        };
+
+        function renderChatMessages(messages) {
+            const container = document.getElementById('chatMessages');
+            container.innerHTML = messages.map(m => `
+                <div class="bg-slate-950/80 border border-passion-500/20 p-2 rounded-xl">
+                    <span class="font-bold text-amber-300 mr-1">${m.sender}:</span>
+                    <span class="text-rose-100">${m.text}</span>
+                </div>
+            `).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Initialize auth on boot
+        initializeAuth();
+    </script>
+</body>
+</html>
